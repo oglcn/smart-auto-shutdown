@@ -246,7 +246,16 @@ install_systemd() {
     step "Installing systemd units"
 
     cat > "${SYSTEMD_DIR}/autoshutdown.timer" <<UNIT_TIMER
-# @EMBED systemd/autoshutdown.timer
+[Unit]
+Description=Smart auto-shutdown monitor timer
+
+[Timer]
+OnBootSec=${BOOT_DELAY}
+OnUnitActiveSec=${CHECK_INTERVAL}
+Unit=autoshutdown.service
+
+[Install]
+WantedBy=timers.target
 UNIT_TIMER
     ok "autoshutdown.timer → ${SYSTEMD_DIR}/"
 

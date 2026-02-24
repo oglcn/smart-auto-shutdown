@@ -434,8 +434,8 @@ install_systemd() {
 Description=Smart auto-shutdown monitor timer
 
 [Timer]
-OnBootSec=__BOOT_DELAY__
-OnUnitActiveSec=__CHECK_INTERVAL__
+OnBootSec=${BOOT_DELAY}
+OnUnitActiveSec=${CHECK_INTERVAL}
 Unit=autoshutdown.service
 
 [Install]
