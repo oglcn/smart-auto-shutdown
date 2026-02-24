@@ -1,0 +1,6 @@
+[Unit]
+Description=Smart auto-shutdown check service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/smart-shutdown-check.sh

@@ -1,0 +1,10 @@
+[Unit]
+Description=Smart auto-shutdown monitor timer
+
+[Timer]
+OnBootSec=__BOOT_DELAY__
+OnUnitActiveSec=__CHECK_INTERVAL__
+Unit=autoshutdown.service
+
+[Install]
+WantedBy=timers.target

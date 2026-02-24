@@ -1,0 +1,57 @@
+#!/bin/bash
+# Smart Auto-Shutdown Control Utility
+
+STATE_FILE="/var/run/smart-shutdown-state"
+
+C_GREEN='\033[0;32m'
+C_YELLOW='\033[1;33m'
+C_BOLD='\033[1m'
+C_RESET='\033[0m'
+
+case "${1:-}" in
+    pause)
+        sudo systemctl stop autoshutdown.timer
+        sudo rm -f "$STATE_FILE"
+        echo -e "${C_GREEN}✓${C_RESET} Auto-shutdown monitoring ${C_YELLOW}PAUSED${C_RESET}"
+        echo "  Run 'shutdown-control resume' to re-enable"
+        ;;
+    resume)
+        sudo systemctl start autoshutdown.timer
+        sudo rm -f "$STATE_FILE"
+        echo -e "${C_GREEN}✓${C_RESET} Auto-shutdown monitoring ${C_GREEN}RESUMED${C_RESET}"
+        echo "  Idle counter has been reset"
+        ;;
+    reset)
+        sudo rm -f "$STATE_FILE"
+        echo -e "${C_GREEN}✓${C_RESET} Idle countdown ${C_GREEN}RESET${C_RESET}"
+        echo "  Counter will start fresh on next check"
+        ;;
+    status)
+        shutdown-status
+        ;;
+    logs)
+        echo -e "${C_BOLD}=== Recent Auto-Shutdown Logs ===${C_RESET}"
+        echo ""
+        sudo journalctl -t smart-shutdown -n 30 --no-pager
+        ;;
+    *)
+        echo ""
+        echo -e "${C_BOLD}Smart Auto-Shutdown Control${C_RESET}"
+        echo ""
+        echo "Usage: shutdown-control <command>"
+        echo ""
+        echo "Commands:"
+        echo "  status   Show current auto-shutdown status"
+        echo "  pause    Temporarily disable auto-shutdown"
+        echo "  resume   Re-enable auto-shutdown monitoring"
+        echo "  reset    Reset idle countdown timer"
+        echo "  logs     View recent auto-shutdown log entries"
+        echo ""
+        echo "Examples:"
+        echo "  shutdown-control pause    # Disable before a long job"
+        echo "  shutdown-control resume   # Re-enable after job completes"
+        echo "  shutdown-control status   # Check current status"
+        echo ""
+        exit 1
+        ;;
+esac
