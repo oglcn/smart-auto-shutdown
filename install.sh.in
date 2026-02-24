@@ -9,10 +9,10 @@
 #  shuts itself down automatically.
 #
 #  One-liner install:
-#    curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh | sudo bash
+#    curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh -o /tmp/install-sas.sh && sudo bash /tmp/install-sas.sh
 #
 #  With defaults (non-interactive):
-#    curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh | sudo bash -s -- --defaults
+#    curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh -o /tmp/install-sas.sh && sudo bash /tmp/install-sas.sh --defaults
 #
 #  Local usage:
 #    sudo ./install.sh                     # interactive
@@ -121,15 +121,6 @@ preflight() {
     [ "$bash_major" -ge 4 ] || fail "bash >= 4 required (found ${BASH_VERSION})."
     ok "bash ${BASH_VERSION}"
 }
-
-# ── Detect piped stdin (curl | bash) ─────────────────────────────────────────
-if [ ! -t 0 ]; then
-    if [ -e /dev/tty ]; then
-        exec < /dev/tty
-    else
-        USE_DEFAULTS=1
-    fi
-fi
 
 # ── Prompt helper (with default) ─────────────────────────────────────────────
 ask() {
