@@ -1,36 +1,10 @@
 # Smart Auto-Shutdown
 
-A lightweight, systemd-based auto-shutdown system for Linux servers.  
-Automatically powers off idle machines to save costs on cloud instances (AWS, GCP, etc.).
+Automatically shut down idle Linux servers to save costs on cloud instances (AWS, GCP, Azure, etc.).
 
-## How it works
+A lightweight systemd-based daemon that monitors SSH sessions and CPU usage, and powers off the machine after a sustained period of inactivity.
 
-```
-Boot ──── wait BOOT_DELAY ──── check every CHECK_INTERVAL ────┐
-                                                               │
-                                    ┌──────────────────────────┤
-                                    │                          │
-                              ┌─────▼─────┐            ┌──────▼──────┐
-                              │  SSH = 0   │── no ─────▶│ Reset timer │
-                              │  CPU < 20% │            └─────────────┘
-                              └─────┬──────┘
-                                    │ yes
-                              ┌─────▼──────────────┐
-                              │ Idle ≥ THRESHOLD ?  │── no ──▶ keep counting
-                              └─────┬──────────────┘
-                                    │ yes
-                              ┌─────▼─────┐
-                              │  Shutdown  │
-                              └───────────┘
-```
-
-**Default behaviour:** After **8 hours** of uptime, the system checks every **10 minutes**.  
-If there are **no SSH sessions** and **CPU is below 20%** for **1 continuous hour**, the machine shuts down with a 1-minute warning.  
-Any SSH connection or CPU spike resets the countdown.
-
-## Quick install
-
-**One-liner** (curl from GitHub and install directly):
+## Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/USER/smart-auto-shutdown/main/install.sh | sudo bash
@@ -42,7 +16,8 @@ Non-interactive with all defaults:
 curl -fsSL https://raw.githubusercontent.com/USER/smart-auto-shutdown/main/install.sh | sudo bash -s -- --defaults
 ```
 
-Or clone and run locally:
+<details>
+<summary>Or clone and run locally</summary>
 
 ```bash
 git clone https://github.com/USER/smart-auto-shutdown.git
@@ -50,34 +25,12 @@ cd smart-auto-shutdown
 sudo ./install.sh
 ```
 
+</details>
+
 ## Uninstall
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/USER/smart-auto-shutdown/main/install.sh | sudo bash -s -- --uninstall
-```
-
-Or locally:
-
-```bash
-sudo ./install.sh --uninstall
-```
-
-## Configuration
-
-All settings live in `/etc/smart-auto-shutdown.conf`:
-
-| Setting | Default | Description |
-|---|---|---|
-| `IDLE_THRESHOLD` | `3600` (1 hr) | Seconds of continuous idle before shutdown |
-| `CPU_THRESHOLD` | `20` | CPU % below which the system is "idle" |
-| `SHUTDOWN_DELAY` | `1` | Minutes of warning before actual halt |
-
-The boot delay and check interval are in the systemd timer (`/etc/systemd/system/autoshutdown.timer`).  
-After editing, reload with:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart autoshutdown.timer
 ```
 
 ## Usage
@@ -90,52 +43,34 @@ shutdown-control reset     # Reset idle countdown
 shutdown-control logs      # View recent log entries
 ```
 
-## How it detects activity
+## Default behaviour
 
-| Signal | Method |
-|---|---|
-| SSH sessions | `ss -tn state established sport = :22` — counts active TCP connections on port 22 |
-| CPU usage | `top -bn2` — two-sample measurement to get an accurate average |
+After **8 hours** of uptime, the system begins checking every **10 minutes**. If there are **no SSH sessions** and **CPU stays below 20%** for **1 continuous hour**, the machine shuts down with a 1-minute warning. Any SSH connection or CPU spike immediately resets the countdown to zero. All thresholds are configurable.
 
-Both conditions must be "idle" simultaneously for the countdown to progress.  
-If **either** becomes active, the countdown resets to zero.
+## Configuration
 
-## Files installed
+All runtime settings live in `/etc/smart-auto-shutdown.conf`:
 
-| Path | Purpose |
-|---|---|
-| `/usr/local/bin/smart-shutdown-check.sh` | Core check script (runs periodically) |
-| `/usr/local/bin/shutdown-status` | Status display utility |
-| `/usr/local/bin/shutdown-control` | Pause / resume / reset / logs |
-| `/etc/systemd/system/autoshutdown.timer` | Systemd timer unit |
-| `/etc/systemd/system/autoshutdown.service` | Systemd service unit |
-| `/etc/smart-auto-shutdown.conf` | Configuration file |
-| `/var/run/smart-shutdown-state` | Runtime state (auto-managed) |
+| Setting | Default | Description |
+|---|---|---|
+| `IDLE_THRESHOLD` | `3600` (1 hour) | Seconds of continuous idle before shutdown |
+| `CPU_THRESHOLD` | `20` | CPU % below which the system is considered idle |
+| `SHUTDOWN_DELAY` | `1` | Minutes of warning before actual halt |
 
-## Development
-
-The distributable `install.sh` is auto-generated. Source files live in `scripts/` and `systemd/`, and `install.sh.in` is the template with `@EMBED` markers.
-
-After editing any source file, rebuild:
+The boot delay and check interval are set in the systemd timer at `/etc/systemd/system/autoshutdown.timer`. After editing any config, reload:
 
 ```bash
-./build.sh    # produces install.sh with all scripts inlined
+sudo systemctl daemon-reload && sudo systemctl restart autoshutdown.timer
 ```
 
-```
-smart-auto-shutdown/
-├── build.sh              # Assembles install.sh from template + sources
-├── install.sh.in         # Installer template (edit this, not install.sh)
-├── install.sh            # ← Generated output (commit this)
-├── uninstall.sh
-├── scripts/
-│   ├── smart-shutdown-check.sh
-│   ├── shutdown-status
-│   └── shutdown-control
-└── systemd/
-    ├── autoshutdown.timer
-    └── autoshutdown.service
-```
+### Activity detection
+
+| Signal | Method | Idle when |
+|---|---|---|
+| SSH | Established TCP connections on port 22 via `ss` | 0 connections |
+| CPU | Two-sample average via `top` | Below `CPU_THRESHOLD` |
+
+Both must be idle simultaneously for the countdown to progress. Either one becoming active resets the countdown to zero.
 
 ## Requirements
 
@@ -144,6 +79,60 @@ smart-auto-shutdown/
 - **iproute2** (`ss`)
 - **procps** (`top`)
 
+---
+
+<details>
+<summary><strong>Development</strong></summary>
+
+### Overview
+
+The distributable `install.sh` is **auto-generated** — do not edit it directly.
+
+Source files live in `scripts/` and `systemd/`. The template `install.sh.in` contains `# @EMBED <path>` markers that get replaced with file contents during the build.
+
+```
+smart-auto-shutdown/
+├── build.sh              # Assembles install.sh from template + source files
+├── install.sh.in         # Installer template (edit this)
+├── install.sh            # ← Generated output (commit this)
+├── uninstall.sh          # Convenience wrapper
+├── scripts/
+│   ├── smart-shutdown-check.sh   # Core idle-detection logic
+│   ├── shutdown-status           # Status display utility
+│   └── shutdown-control          # CLI control (pause/resume/reset/logs)
+└── systemd/
+    ├── autoshutdown.timer        # Timer unit template
+    └── autoshutdown.service      # Service unit
+```
+
+### Build
+
+After editing any source file:
+
+```bash
+./build.sh
+```
+
+This reads `install.sh.in`, inlines every `@EMBED` reference, and writes the self-contained `install.sh`. Commit both the source files and the generated `install.sh`.
+
+### Files installed on target
+
+| Path | Purpose |
+|---|---|
+| `/usr/local/bin/smart-shutdown-check.sh` | Core check script (runs on timer) |
+| `/usr/local/bin/shutdown-status` | Status display |
+| `/usr/local/bin/shutdown-control` | CLI control utility |
+| `/etc/systemd/system/autoshutdown.timer` | Systemd timer unit |
+| `/etc/systemd/system/autoshutdown.service` | Systemd service unit |
+| `/etc/smart-auto-shutdown.conf` | Runtime configuration |
+| `/var/run/smart-shutdown-state` | Idle state tracking (auto-managed) |
+
+</details>
+
 ## License
 
 MIT
+
+---
+
+Made with ❤ by [@oglcn](https://github.com/oglcn)
