@@ -53,7 +53,7 @@ banner() {
     echo ""
     echo -e "${C_BOLD}${C_CYAN}"
     echo "  ┌──────────────────────────────────────────┐"
-    echo "  │       Smart Auto-Shutdown Installer       │"
+    echo "  │       Smart Auto-Shutdown Installer      │"
     echo "  └──────────────────────────────────────────┘"
     echo -e "${C_RESET}"
 }
