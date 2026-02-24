@@ -7,20 +7,20 @@ A lightweight systemd-based daemon that monitors SSH sessions and CPU usage, and
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/USER/smart-auto-shutdown/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh | sudo bash
 ```
 
 Non-interactive with all defaults:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/USER/smart-auto-shutdown/main/install.sh | sudo bash -s -- --defaults
+curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh | sudo bash -s -- --defaults
 ```
 
 <details>
 <summary>Or clone and run locally</summary>
 
 ```bash
-git clone https://github.com/USER/smart-auto-shutdown.git
+git clone https://github.com/oglcn/smart-auto-shutdown.git
 cd smart-auto-shutdown
 sudo ./install.sh
 ```
@@ -30,7 +30,7 @@ sudo ./install.sh
 ## Uninstall
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/USER/smart-auto-shutdown/main/install.sh | sudo bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh | sudo bash -s -- --uninstall
 ```
 
 ## Usage

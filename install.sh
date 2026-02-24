@@ -9,10 +9,10 @@
 #  shuts itself down automatically.
 #
 #  One-liner install:
-#    curl -fsSL https://raw.githubusercontent.com/USER/smart-auto-shutdown/main/install.sh | sudo bash
+#    curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh | sudo bash
 #
 #  With defaults (non-interactive):
-#    curl -fsSL https://raw.githubusercontent.com/USER/smart-auto-shutdown/main/install.sh | sudo bash -s -- --defaults
+#    curl -fsSL https://raw.githubusercontent.com/oglcn/smart-auto-shutdown/main/install.sh | sudo bash -s -- --defaults
 #
 #  Local usage:
 #    sudo ./install.sh                     # interactive
