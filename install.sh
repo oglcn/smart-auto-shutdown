@@ -466,7 +466,7 @@ finish() {
     echo ""
     echo -e "${C_BOLD}${C_GREEN}"
     echo "  ┌──────────────────────────────────────────┐"
-    echo "  │         Installation complete!            │"
+    echo "  │         Installation complete!           │"
     echo "  └──────────────────────────────────────────┘"
     echo -e "${C_RESET}"
     echo "  Quick reference:"
