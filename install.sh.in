@@ -122,15 +122,36 @@ preflight() {
     ok "bash ${BASH_VERSION}"
 }
 
-# ── Prompt helper (with default) ─────────────────────────────────────────────
+# ── Validators ───────────────────────────────────────────────────────────────
+validate_timespan() {
+    [[ "$1" =~ ^[0-9]+(s|sec|min|h|hr|d)?$ ]] || \
+    [[ "$1" =~ ^([0-9]+(s|sec|min|h|hr|d))+$ ]]
+}
+
+validate_int() {
+    [[ "$1" =~ ^[0-9]+$ ]] && [ "$1" -gt 0 ]
+}
+
+validate_percent() {
+    [[ "$1" =~ ^[0-9]+$ ]] && [ "$1" -gt 0 ] && [ "$1" -le 100 ]
+}
+
+# ── Prompt helper (with default + validation) ────────────────────────────────
 ask() {
-    local var="$1" prompt="$2" default="$3"
+    local var="$1" prompt="$2" default="$3" validator="$4" hint="$5"
     if [ "${USE_DEFAULTS:-}" = "1" ]; then
         eval "$var=\"$default\""
         return
     fi
-    read -rp "$(echo -e "  ${C_CYAN}?${C_RESET} ${prompt} ${C_DIM}[${default}]${C_RESET}: ")" input
-    eval "$var=\"${input:-$default}\""
+    while true; do
+        read -rp "$(echo -e "  ${C_CYAN}?${C_RESET} ${prompt} ${C_DIM}[${default}]${C_RESET}: ")" input
+        input="${input:-$default}"
+        if $validator "$input"; then
+            eval "$var=\"$input\""
+            return
+        fi
+        echo -e "  ${C_RED}✗${C_RESET} Invalid input. ${hint}"
+    done
 }
 
 # ── Configure ────────────────────────────────────────────────────────────────
@@ -139,11 +160,20 @@ configure() {
     info "Press Enter to accept the default value shown in brackets."
     echo ""
 
-    ask BOOT_DELAY      "Uptime before monitoring starts"             "$DEF_BOOT_DELAY"
-    ask CHECK_INTERVAL  "Check interval once monitoring starts"       "$DEF_CHECK_INTERVAL"
-    ask IDLE_THRESHOLD  "Seconds of idle before shutdown"             "$DEF_IDLE_THRESHOLD"
-    ask CPU_THRESHOLD   "CPU % below which system is considered idle" "$DEF_CPU_THRESHOLD"
-    ask SHUTDOWN_DELAY  "Minutes of warning before actual halt"       "$DEF_SHUTDOWN_DELAY"
+    ask BOOT_DELAY      "Uptime before monitoring starts"             "$DEF_BOOT_DELAY"    \
+        validate_timespan "Use systemd time format: e.g. 30min, 2h, 1h30min"
+
+    ask CHECK_INTERVAL  "Check interval once monitoring starts"       "$DEF_CHECK_INTERVAL" \
+        validate_timespan "Use systemd time format: e.g. 5min, 10min, 1h"
+
+    ask IDLE_THRESHOLD  "Idle time before shutdown (seconds)"         "$DEF_IDLE_THRESHOLD" \
+        validate_int      "Must be a positive integer (seconds). e.g. 1800, 3600"
+
+    ask CPU_THRESHOLD   "CPU % below which system is idle (1-100)"   "$DEF_CPU_THRESHOLD"  \
+        validate_percent  "Must be an integer between 1 and 100"
+
+    ask SHUTDOWN_DELAY  "Warning time before halt (minutes)"         "$DEF_SHUTDOWN_DELAY"  \
+        validate_int      "Must be a positive integer (minutes). e.g. 1, 5"
 
     echo ""
     info "Summary:"
