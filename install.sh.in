@@ -122,6 +122,15 @@ preflight() {
     ok "bash ${BASH_VERSION}"
 }
 
+# ── Detect piped stdin (curl | bash) ─────────────────────────────────────────
+if [ ! -t 0 ]; then
+    if [ -e /dev/tty ]; then
+        exec < /dev/tty
+    else
+        USE_DEFAULTS=1
+    fi
+fi
+
 # ── Prompt helper (with default) ─────────────────────────────────────────────
 ask() {
     local var="$1" prompt="$2" default="$3"
